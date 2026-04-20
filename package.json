@@ -6,7 +6,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.ts",
-    "check": "npm run typecheck && npm run test"
+    "check": "npm run typecheck && npm run test",
+    "analyze:sessions": "node scripts/analyze-pi-sessions.mjs"
   },
   "files": [
     "index.ts",
