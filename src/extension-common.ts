@@ -1,5 +1,6 @@
 import { Result, TaggedError } from "better-result";
 import { getAgentDir } from "@mariozechner/pi-coding-agent";
+import { readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
@@ -31,7 +32,11 @@ type FeatureState = {
 
 export const FEATURE_DEFINITIONS: FeatureDefinition[] = [
 	{ id: "autocomplete", label: "Autocomplete", description: "Use FFF for @... editor autocomplete" },
-	{ id: "builtInToolEnhancements", label: "Built-in tool enhancements", description: "Use FFF to improve built-in read and grep" },
+	{
+		id: "builtInToolEnhancements",
+		label: "Built-in tool enhancements",
+		description: "Use FFF to improve built-in read and grep (requires /reload after changing)",
+	},
 	{ id: "agentTools", label: "Agent tools", description: "Enable find_files / fff_multi_grep" },
 	{ id: "statusUI", label: "Status UI", description: "Show startup notices" },
 ];
@@ -161,6 +166,29 @@ function isFeatureKey(value: string): value is FeatureKey {
 	return ALL_FEATURE_KEYS.includes(value as FeatureKey);
 }
 
+function parseFeatureState(content: string): FeatureKey[] | undefined {
+	const parsed = JSON.parse(content) as FeatureState | undefined;
+	if (!Array.isArray(parsed?.enabledFeatures)) return undefined;
+	const enabled = parsed.enabledFeatures.filter(isFeatureKey);
+	return enabled.length > 0 ? enabled : [];
+}
+
+export function loadGlobalFeatureStateSync() {
+	const contentResult = Result.try<string, FeatureStateReadError>({
+		try: () => readFileSync(GLOBAL_FEATURES_PATH, "utf8"),
+		catch: (cause) => new FeatureStateReadError({ path: GLOBAL_FEATURES_PATH, cause }),
+	});
+	if (contentResult.isErr()) {
+		if (isMissingFileError(contentResult.error.cause)) return Result.ok<FeatureKey[] | undefined>(undefined);
+		return contentResult;
+	}
+
+	return Result.try<FeatureKey[] | undefined, FeatureStateLoadError>({
+		try: () => parseFeatureState(contentResult.value),
+		catch: (cause) => new FeatureStateParseError({ path: GLOBAL_FEATURES_PATH, cause }),
+	});
+}
+
 export async function loadGlobalFeatureState() {
 	const contentResult = await Result.tryPromise({
 		try: () => readFile(GLOBAL_FEATURES_PATH, "utf8"),
@@ -172,12 +200,7 @@ export async function loadGlobalFeatureState() {
 	}
 
 	return Result.try<FeatureKey[] | undefined, FeatureStateLoadError>({
-		try: () => {
-			const parsed = JSON.parse(contentResult.value) as FeatureState | undefined;
-			if (!Array.isArray(parsed?.enabledFeatures)) return undefined;
-			const enabled = parsed.enabledFeatures.filter(isFeatureKey);
-			return enabled.length > 0 ? enabled : [];
-		},
+		try: () => parseFeatureState(contentResult.value),
 		catch: (cause) => new FeatureStateParseError({ path: GLOBAL_FEATURES_PATH, cause }),
 	});
 }

@@ -3,6 +3,7 @@ import {
 	ALL_FEATURE_KEYS,
 	CUSTOM_TOOL_NAMES,
 	loadGlobalFeatureState,
+	loadGlobalFeatureStateSync,
 	saveGlobalFeatureState,
 	type FeatureKey,
 } from "./extension-common.ts";
@@ -14,6 +15,12 @@ import { registerTools } from "./register-tools.ts";
 export default function (pi: ExtensionAPI) {
 	let runtime: FffRuntime | null = null;
 	let enabledFeatures = new Set<FeatureKey>(ALL_FEATURE_KEYS);
+	const initialFeatureState = loadGlobalFeatureStateSync();
+	if (initialFeatureState.isOk()) {
+		enabledFeatures = new Set(initialFeatureState.value ?? ALL_FEATURE_KEYS);
+	} else {
+		console.warn("Failed to restore pi-fff feature state during extension load:", initialFeatureState.error);
+	}
 	const isFeatureEnabled = (feature: FeatureKey) => enabledFeatures.has(feature);
 	const getRuntime = () => runtime;
 	const getEnabledFeatures = () => new Set(enabledFeatures);
@@ -62,6 +69,7 @@ export default function (pi: ExtensionAPI) {
 		getRuntime,
 		isFeatureEnabled,
 		agentToolsDisabledText,
+		registerBuiltInToolEnhancements: isFeatureEnabled("builtInToolEnhancements"),
 	});
 
 	registerCommands(pi, {

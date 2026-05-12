@@ -21,6 +21,7 @@ export type ToolRegistrationDeps = {
 	getRuntime(): FffRuntime | null;
 	isFeatureEnabled(feature: FeatureKey): boolean;
 	agentToolsDisabledText(): string;
+	registerBuiltInToolEnhancements: boolean;
 };
 
 function textResult<T>(text: string, details: T) {
@@ -45,34 +46,36 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 		return { kind: "ready" as const, runtime };
 	};
 
-	pi.registerTool({
-		name: "read",
-		label: "read",
-		description: `${readTemplate.description} Accepts approximate file paths and resolves them with fff before reading.`,
-		parameters: readTemplate.parameters,
-		async execute(toolCallId, params, signal, onUpdate, ctx) {
-			const original = createReadTool(ctx.cwd);
-			const runtime = deps.getRuntime();
-			if (!runtime || !deps.isFeatureEnabled("builtInToolEnhancements")) {
-				return original.execute(toolCallId, params, signal, onUpdate);
-			}
+	if (deps.registerBuiltInToolEnhancements) {
+		pi.registerTool({
+			name: "read",
+			label: "read",
+			description: `${readTemplate.description} Accepts approximate file paths and resolves them with fff before reading.`,
+			parameters: readTemplate.parameters,
+			async execute(toolCallId, params, signal, onUpdate, ctx) {
+				const original = createReadTool(ctx.cwd);
+				const runtime = deps.getRuntime();
+				if (!runtime || !deps.isFeatureEnabled("builtInToolEnhancements")) {
+					return original.execute(toolCallId, params, signal, onUpdate);
+				}
 
-			const resolution = await runtime.resolvePath(params.path, { allowDirectory: false, limit: 8 });
-			return resolution.match({
-				err: async (error) => textResult(buildReadFailureMessage("read", params.path, error), { resolution }),
-				ok: async (resolved) => {
-					void runtime.trackQuery(params.path, resolved.absolutePath);
-					const locationParams = locationToReadParams(resolved, params.offset, params.limit);
-					return original.execute(
-						toolCallId,
-						{ ...params, path: resolved.absolutePath, offset: locationParams.offset, limit: locationParams.limit },
-						signal,
-						onUpdate,
-					);
-				},
-			});
-		},
-	});
+				const resolution = await runtime.resolvePath(params.path, { allowDirectory: false, limit: 8 });
+				return resolution.match({
+					err: async (error) => textResult(buildReadFailureMessage("read", params.path, error), { resolution }),
+					ok: async (resolved) => {
+						void runtime.trackQuery(params.path, resolved.absolutePath);
+						const locationParams = locationToReadParams(resolved, params.offset, params.limit);
+						return original.execute(
+							toolCallId,
+							{ ...params, path: resolved.absolutePath, offset: locationParams.offset, limit: locationParams.limit },
+							signal,
+							onUpdate,
+						);
+					},
+				});
+			},
+		});
+	}
 
 	const grepSchema = Type.Object({
 		pattern: Type.String({ description: "Search pattern" }),
@@ -88,64 +91,66 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 		outputMode: Type.Optional(Type.String({ description: "Output mode: content, files_with_matches, count, or usage" })),
 	});
 
-	pi.registerTool({
-		name: "grep",
-		label: "grep",
-		description: `${grepTemplate.description} Uses fff for content search and can resolve approximate file or folder scopes.`,
-		promptSnippet: "Search file contents (FFF-backed) with optional path/glob scope.",
-		promptGuidelines: [
-			"Prefer simple literal patterns over complex regex when possible.",
-			"Use path/glob/constraints to narrow scope before trying another grep.",
-			"Use outputMode=files_with_matches when content output is too noisy.",
-			"After one or two good greps, read the best matching file.",
-		],
-		parameters: grepSchema,
-		async execute(toolCallId, params, signal, onUpdate, ctx) {
-			const original = createGrepTool(ctx.cwd);
-			const runtime = deps.getRuntime();
-			const builtinParams = {
-				pattern: params.pattern,
-				path: params.path,
-				glob: params.glob,
-				ignoreCase: params.ignoreCase,
-				literal: params.literal,
-				context: params.context,
-				limit: params.limit,
-			};
-			const explicitMode = normalizeMode(params.mode);
-			const fallbackLiteral = params.literal ?? (params.mode ? explicitMode !== "regex" : undefined);
-			if (
-				!runtime
-				|| !deps.isFeatureEnabled("builtInToolEnhancements")
-				|| grepNeedsBuiltinFallback({ pattern: params.pattern, ignoreCase: params.ignoreCase, literal: fallbackLiteral })
-			) {
-				return original.execute(toolCallId, builtinParams, signal, onUpdate);
-			}
+	if (deps.registerBuiltInToolEnhancements) {
+		pi.registerTool({
+			name: "grep",
+			label: "grep",
+			description: `${grepTemplate.description} Uses fff for content search and can resolve approximate file or folder scopes.`,
+			promptSnippet: "Search file contents (FFF-backed) with optional path/glob scope.",
+			promptGuidelines: [
+				"Prefer simple literal patterns over complex regex when possible.",
+				"Use path/glob/constraints to narrow scope before trying another grep.",
+				"Use outputMode=files_with_matches when content output is too noisy.",
+				"After one or two good greps, read the best matching file.",
+			],
+			parameters: grepSchema,
+			async execute(toolCallId, params, signal, onUpdate, ctx) {
+				const original = createGrepTool(ctx.cwd);
+				const runtime = deps.getRuntime();
+				const builtinParams = {
+					pattern: params.pattern,
+					path: params.path,
+					glob: params.glob,
+					ignoreCase: params.ignoreCase,
+					literal: params.literal,
+					context: params.context,
+					limit: params.limit,
+				};
+				const explicitMode = normalizeMode(params.mode);
+				const fallbackLiteral = params.literal ?? (params.mode ? explicitMode !== "regex" : undefined);
+				if (
+					!runtime
+					|| !deps.isFeatureEnabled("builtInToolEnhancements")
+					|| grepNeedsBuiltinFallback({ pattern: params.pattern, ignoreCase: params.ignoreCase, literal: fallbackLiteral })
+				) {
+					return original.execute(toolCallId, builtinParams, signal, onUpdate);
+				}
 
-			const pattern = params.ignoreCase === true ? params.pattern.toLowerCase() : params.pattern;
-			const result = await runtime.grepSearch({
-				pattern,
-				mode: params.mode ? explicitMode : inferFffGrepMode(params.literal),
-				pathQuery: params.path,
-				glob: params.glob,
-				constraints: params.constraints,
-				context: params.context,
-				limit: params.limit,
-				cursor: params.cursor,
-				includeCursorHint: false,
-				outputMode: normalizeOutputMode(params.outputMode),
-			});
-			return result.match({
-				err: async (error) => {
-					if (RuntimeInitializationError.is(error) || FinderOperationError.is(error)) {
-						return original.execute(toolCallId, builtinParams, signal, onUpdate);
-					}
-					return textResult(buildGrepFailureMessage(error, params.path), buildGrepDetails(undefined, undefined, error));
-				},
-				ok: async (value) => textResult(value.formatted, buildGrepDetails(value)),
-			});
-		},
-	});
+				const pattern = params.ignoreCase === true ? params.pattern.toLowerCase() : params.pattern;
+				const result = await runtime.grepSearch({
+					pattern,
+					mode: params.mode ? explicitMode : inferFffGrepMode(params.literal),
+					pathQuery: params.path,
+					glob: params.glob,
+					constraints: params.constraints,
+					context: params.context,
+					limit: params.limit,
+					cursor: params.cursor,
+					includeCursorHint: false,
+					outputMode: normalizeOutputMode(params.outputMode),
+				});
+				return result.match({
+					err: async (error) => {
+						if (RuntimeInitializationError.is(error) || FinderOperationError.is(error)) {
+							return original.execute(toolCallId, builtinParams, signal, onUpdate);
+						}
+						return textResult(buildGrepFailureMessage(error, params.path), buildGrepDetails(undefined, undefined, error));
+					},
+					ok: async (value) => textResult(value.formatted, buildGrepDetails(value)),
+				});
+			},
+		});
+	}
 
 	pi.registerTool({
 		name: "find_files",
