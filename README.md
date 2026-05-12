@@ -1,3 +1,5 @@
+# This is my implementation for pi-fff, for the official version make sure to checkout https://github.com/dmtrKovalenko/fff.nvim.
+
 # pi-fff
 
 [![pi-fff demo](https://github.com/user-attachments/assets/c9020bb7-f708-4f75-a802-6ac182b48e07)](https://github.com/user-attachments/assets/1a9fc348-19bc-489b-9de9-bb329728d234)
