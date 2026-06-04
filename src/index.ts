@@ -69,7 +69,8 @@ export default function (pi: ExtensionAPI) {
 		getRuntime,
 		isFeatureEnabled,
 		agentToolsDisabledText,
-		registerBuiltInToolEnhancements: isFeatureEnabled("builtInToolEnhancements"),
+		registerBuiltInReadEnhancement: isFeatureEnabled("builtInReadEnhancement"),
+		registerBuiltInGrepEnhancement: isFeatureEnabled("builtInGrepEnhancement"),
 	});
 
 	registerCommands(pi, {

@@ -18,7 +18,9 @@ const GLOBAL_FEATURES_PATH = join(getAgentDir(), "extensions", "pi-fff.json");
 export const CUSTOM_TOOL_NAMES = ["find_files", "fff_multi_grep"] as const;
 export const FFF_RUNTIME_NOT_READY_TEXT = "FFF runtime is not ready.";
 
-export type FeatureKey = "autocomplete" | "builtInToolEnhancements" | "agentTools" | "statusUI";
+export type FeatureKey = "autocomplete" | "builtInReadEnhancement" | "builtInGrepEnhancement" | "agentTools" | "statusUI";
+
+const LEGACY_BUILT_IN_TOOL_ENHANCEMENTS_KEY = "builtInToolEnhancements";
 
 export type FeatureDefinition = {
 	id: FeatureKey;
@@ -33,9 +35,14 @@ type FeatureState = {
 export const FEATURE_DEFINITIONS: FeatureDefinition[] = [
 	{ id: "autocomplete", label: "Autocomplete", description: "Use FFF for @... editor autocomplete" },
 	{
-		id: "builtInToolEnhancements",
-		label: "Built-in tool enhancements",
-		description: "Use FFF to improve built-in read and grep (requires /reload after changing)",
+		id: "builtInReadEnhancement",
+		label: "Built-in read enhancement",
+		description: "Resolve approximate paths before built-in read (requires /reload after enabling)",
+	},
+	{
+		id: "builtInGrepEnhancement",
+		label: "Built-in grep enhancement",
+		description: "Use FFF-backed content search for built-in grep (requires /reload after enabling)",
 	},
 	{ id: "agentTools", label: "Agent tools", description: "Enable find_files / fff_multi_grep" },
 	{ id: "statusUI", label: "Status UI", description: "Show startup notices" },
@@ -167,9 +174,15 @@ function isFeatureKey(value: string): value is FeatureKey {
 }
 
 function parseFeatureState(content: string): FeatureKey[] | undefined {
-	const parsed = JSON.parse(content) as FeatureState | undefined;
+	const parsed = JSON.parse(content) as { enabledFeatures?: unknown[] } | undefined;
 	if (!Array.isArray(parsed?.enabledFeatures)) return undefined;
-	const enabled = parsed.enabledFeatures.filter(isFeatureKey);
+
+	const savedFeatures = parsed.enabledFeatures.filter((feature): feature is string => typeof feature === "string");
+	const enabled = savedFeatures.filter(isFeatureKey);
+	if (savedFeatures.includes(LEGACY_BUILT_IN_TOOL_ENHANCEMENTS_KEY)) {
+		if (!enabled.includes("builtInReadEnhancement")) enabled.push("builtInReadEnhancement");
+		if (!enabled.includes("builtInGrepEnhancement")) enabled.push("builtInGrepEnhancement");
+	}
 	return enabled.length > 0 ? enabled : [];
 }
 

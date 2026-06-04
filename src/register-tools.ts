@@ -21,7 +21,8 @@ export type ToolRegistrationDeps = {
 	getRuntime(): FffRuntime | null;
 	isFeatureEnabled(feature: FeatureKey): boolean;
 	agentToolsDisabledText(): string;
-	registerBuiltInToolEnhancements: boolean;
+	registerBuiltInReadEnhancement: boolean;
+	registerBuiltInGrepEnhancement: boolean;
 };
 
 function textResult<T>(text: string, details: T) {
@@ -46,7 +47,7 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 		return { kind: "ready" as const, runtime };
 	};
 
-	if (deps.registerBuiltInToolEnhancements) {
+	if (deps.registerBuiltInReadEnhancement) {
 		pi.registerTool({
 			name: "read",
 			label: "read",
@@ -55,7 +56,7 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 			async execute(toolCallId, params, signal, onUpdate, ctx) {
 				const original = createReadTool(ctx.cwd);
 				const runtime = deps.getRuntime();
-				if (!runtime || !deps.isFeatureEnabled("builtInToolEnhancements")) {
+				if (!runtime || !deps.isFeatureEnabled("builtInReadEnhancement")) {
 					return original.execute(toolCallId, params, signal, onUpdate);
 				}
 
@@ -91,7 +92,7 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 		outputMode: Type.Optional(Type.String({ description: "Output mode: content, files_with_matches, count, or usage" })),
 	});
 
-	if (deps.registerBuiltInToolEnhancements) {
+	if (deps.registerBuiltInGrepEnhancement) {
 		pi.registerTool({
 			name: "grep",
 			label: "grep",
@@ -120,7 +121,7 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 				const fallbackLiteral = params.literal ?? (params.mode ? explicitMode !== "regex" : undefined);
 				if (
 					!runtime
-					|| !deps.isFeatureEnabled("builtInToolEnhancements")
+					|| !deps.isFeatureEnabled("builtInGrepEnhancement")
 					|| grepNeedsBuiltinFallback({ pattern: params.pattern, ignoreCase: params.ignoreCase, literal: fallbackLiteral })
 				) {
 					return original.execute(toolCallId, builtinParams, signal, onUpdate);

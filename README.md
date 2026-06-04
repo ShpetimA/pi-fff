@@ -40,7 +40,7 @@ Type things like:
 
 ### 2. Built-in tool upgrades
 
-The extension overrides pi’s built-in tools to make them FFF-aware.
+The extension can override pi’s built-in tools to make them FFF-aware. The `read` and `grep` upgrades are separate feature flags in `/fff-features`, so you can enable one without the other.
 
 #### `read`
 
@@ -148,6 +148,7 @@ Interactive feature toggle UI.
 - Space toggles the selected row
 - Enter saves
 - Esc cancels
+- Built-in `read` and `grep` enhancements can be toggled independently
 - State is stored globally in:
   - `~/.pi/agent/extensions/pi-fff.json`
 
