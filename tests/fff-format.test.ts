@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { GrepMatch } from "@ff-labs/fff-node";
-import { buildGrepText, cropMatchLine, formatCandidateLines } from "../src/fff.ts";
+import { buildGrepText, cropMatchLine, formatCandidateLines, type GrepMatch } from "../src/fff.ts";
 
 function makeMatch(overrides: Partial<GrepMatch> = {}): GrepMatch {
 	return {

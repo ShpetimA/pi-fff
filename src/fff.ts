@@ -7,6 +7,7 @@ export type {
 	GrepOutputMode,
 	GrepSearchRequest,
 	GrepSearchResponse,
+	GrepMatch,
 	HealthCheck,
 	PathResolution,
 	RelatedFilesResponse,

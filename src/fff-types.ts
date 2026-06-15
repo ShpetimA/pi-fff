@@ -1,7 +1,10 @@
-import type { HealthCheck, FileItem, FileFinder, GrepCursor, GrepMatch, GrepMode, GrepResult, Location, Result as EngineResult, Score } from "@ff-labs/fff-node";
+import type { HealthCheck, FileItem as EngineFileItem, FileFinder, GrepCursor, GrepMatch as EngineGrepMatch, GrepMode, GrepResult, Location, Result as EngineResult, Score } from "@ff-labs/fff-node";
 import type { TruncationResult } from "@mariozechner/pi-coding-agent";
 import type { FindFilesError, GrepSearchError, PathResolutionError, RelatedFilesError } from "./errors.ts";
 import type { AppResult } from "./result-utils.ts";
+
+export type FileItem = EngineFileItem & { path?: string };
+export type GrepMatch = EngineGrepMatch & { path?: string };
 
 export const DEFAULT_FILE_CANDIDATE_LIMIT = 8;
 export const DEFAULT_GREP_LIMIT = 100;
@@ -132,4 +135,4 @@ export type RuntimeMetadata = {
 	definitionClassification: "heuristic" | "native";
 };
 
-export type { HealthCheck, FileItem, FileFinder, GrepCursor, GrepMatch, GrepMode, GrepResult, Location, EngineResult, Score };
+export type { HealthCheck, FileFinder, GrepCursor, GrepMode, GrepResult, Location, EngineResult, Score };

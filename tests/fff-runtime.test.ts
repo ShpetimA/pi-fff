@@ -3,8 +3,8 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import type { FileFinder, GrepCursor, GrepMatch, Result, SearchResult, GrepResult } from "@ff-labs/fff-node";
-import { FffRuntime } from "../src/fff.ts";
+import type { FileFinder, GrepCursor, Result, SearchResult, GrepResult } from "@ff-labs/fff-node";
+import { FffRuntime, type GrepMatch } from "../src/fff.ts";
 
 function ok<T>(value: T): Result<T> {
 	return { ok: true, value };
@@ -166,6 +166,36 @@ test("findFiles returns paginated cursor and continues on next page", async () =
 	assert.equal(second.value.nextCursor, undefined);
 	assert.equal(calls.length, 2);
 	assert.deepEqual(calls.map((call) => call.pageIndex), [0, 1]);
+});
+
+test("findFiles handles non-ASCII file names", async () => {
+	const root = await mkdtemp(join(tmpdir(), "pi-fff-unicode-"));
+	await mkdir(join(root, "src"), { recursive: true });
+	const filePath = join(root, "src", "14 февраля AppStore.ts");
+	await writeFile(filePath, "export const appStore = true;\n", "utf8");
+
+	const runtime = new FffRuntime(root, { projectRoot: root });
+	try {
+		const warm = await runtime.warm(5000);
+		assert.equal(warm.isOk(), true);
+		if (warm.isErr()) assert.fail(warm.error.message);
+
+		const reindex = await runtime.reindex();
+		assert.equal(reindex.isOk(), true);
+		if (reindex.isErr()) assert.fail(reindex.error.message);
+
+		const scanned = await runtime.warm(5000);
+		assert.equal(scanned.isOk(), true);
+		if (scanned.isErr()) assert.fail(scanned.error.message);
+
+		const result = await runtime.findFiles({ query: "AppStore", limit: 5 });
+		assert.equal(result.isOk(), true);
+		if (result.isErr()) assert.fail(result.error.message);
+		assert.equal(result.value.items[0]?.item.relativePath, "src/14 февраля AppStore.ts");
+	} finally {
+		runtime.dispose();
+		await rm(root, { recursive: true, force: true });
+	}
 });
 
 test("resolvePath prefers project-root exact paths while still allowing explicit cwd-relative paths", async () => {
