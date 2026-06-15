@@ -445,7 +445,7 @@ export class FffRuntime {
 			return errResult(new AmbiguousPathError({ query, candidates: filtered }));
 		}
 
-		const absolutePath = isAbsolute(top.item.path) ? top.item.path : resolve(this.basePath, top.item.relativePath);
+		const absolutePath = top.item.path && isAbsolute(top.item.path) ? top.item.path : resolve(this.basePath, top.item.relativePath);
 		const pathType = (await getPathType(absolutePath)) ?? "file";
 		return Result.ok({
 			kind: "resolved",
