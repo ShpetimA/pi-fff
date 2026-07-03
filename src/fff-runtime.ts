@@ -70,6 +70,14 @@ function isHomeDirectory(path: string): boolean {
 	return resolve(path) === resolve(home);
 }
 
+function isPathOutsideBasePath(basePath: string, targetPath: string): boolean {
+	const resolvedBase = resolve(basePath);
+	const resolvedTarget = resolve(targetPath);
+	const rel = relative(resolvedBase, resolvedTarget);
+	// If the relative path starts with "..", the target is outside the base path
+	return rel.startsWith("..");
+}
+
 function normalizeSlashes(value: string): string {
 	return value.replace(/\\/g, "/");
 }
@@ -417,6 +425,7 @@ export class FffRuntime {
 					relativePath: direct.relativePath,
 					pathType: direct.pathType,
 					candidates: [],
+					isOutsideBasePath: direct.isOutsideBasePath,
 				});
 			}
 		}
@@ -439,6 +448,7 @@ export class FffRuntime {
 				pathType: direct.pathType,
 				location: search.value.location,
 				candidates: filtered,
+				isOutsideBasePath: direct.isOutsideBasePath,
 			});
 		}
 
@@ -452,6 +462,7 @@ export class FffRuntime {
 
 		const absolutePath = top.item.path && isAbsolute(top.item.path) ? top.item.path : resolve(this.basePath, top.item.relativePath);
 		const pathType = (await getPathType(absolutePath)) ?? "file";
+		const isOutsideBasePath = isPathOutsideBasePath(this.basePath, absolutePath);
 		return Result.ok({
 			kind: "resolved",
 			query,
@@ -460,6 +471,7 @@ export class FffRuntime {
 			pathType,
 			location: search.value.location,
 			candidates: filtered,
+			isOutsideBasePath,
 		});
 	}
 
@@ -800,7 +812,7 @@ export class FffRuntime {
 		} satisfies GrepSearchResponse);
 	}
 
-	private async resolveExistingPath(query: string, allowDirectory: boolean): Promise<Pick<ResolvedPath, "absolutePath" | "relativePath" | "pathType"> | null> {
+	private async resolveExistingPath(query: string, allowDirectory: boolean): Promise<Pick<ResolvedPath, "absolutePath" | "relativePath" | "pathType" | "isOutsideBasePath"> | null> {
 		const candidates = isAbsolute(query)
 			? [query]
 			: query.startsWith("./") || query.startsWith("../")
@@ -812,10 +824,12 @@ export class FffRuntime {
 			const pathType = await getPathType(directPath);
 			if (!pathType) continue;
 			if (pathType === "directory" && !allowDirectory) continue;
+			const relativePath = relativeFrom(this.basePath, directPath);
 			return {
 				absolutePath: directPath,
-				relativePath: relativeFrom(this.basePath, directPath),
+				relativePath,
 				pathType,
+				isOutsideBasePath: isPathOutsideBasePath(this.basePath, directPath),
 			};
 		}
 		return null;

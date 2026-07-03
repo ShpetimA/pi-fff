@@ -147,7 +147,13 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 						}
 						return textResult(buildGrepFailureMessage(error, params.path), buildGrepDetails(undefined, undefined, error));
 					},
-					ok: async (value) => textResult(value.formatted, buildGrepDetails(value)),
+					ok: async (value) => {
+						// If the scope is outside the base path, fall back to built-in grep
+						if (value.scope?.isOutsideBasePath) {
+							return original.execute(toolCallId, builtinParams, signal, onUpdate);
+						}
+						return textResult(value.formatted, buildGrepDetails(value));
+					},
 				});
 			},
 		});

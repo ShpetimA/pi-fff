@@ -620,3 +620,37 @@ test("initialize rejects home directory as project root", async () => {
 	assert.match(result.error.message, /Cannot index the home directory/i);
 	assert.match(result.error.message, /navigate to a specific project directory/i);
 });
+
+test("resolvePath marks paths outside basePath", async () => {
+	const root = await mkdtemp(join(tmpdir(), "pi-fff-"));
+	const sibling = await mkdtemp(join(tmpdir(), "pi-fff-sibling-"));
+	await writeFile(join(sibling, "test.txt"), "hello\n", "utf8");
+
+	const finder = createMockFinder({
+		fileSearch() {
+			return ok({
+				items: [],
+				totalFiles: 0,
+				totalMatched: 0,
+				scores: [],
+			});
+		},
+	});
+
+	const runtime = new FffRuntime(root, { finder });
+
+	// Test absolute path outside basePath
+	const result = await runtime.resolvePath(sibling);
+	assert.equal(result.isOk(), true);
+	if (result.isErr()) assert.fail(result.error.message);
+	assert.equal(result.value.isOutsideBasePath, true);
+	assert.equal(result.value.absolutePath, sibling);
+
+	// Test path inside basePath
+	const insidePath = join(root, "inside");
+	await mkdir(insidePath, { recursive: true });
+	const insideResult = await runtime.resolvePath(insidePath);
+	assert.equal(insideResult.isOk(), true);
+	if (insideResult.isErr()) assert.fail(insideResult.error.message);
+	assert.equal(insideResult.value.isOutsideBasePath, false);
+});
