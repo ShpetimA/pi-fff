@@ -611,3 +611,12 @@ test("grepSearch treats dot scope as project root", async () => {
 	assert.equal(result.value.items.length, 1);
 	assert.equal(result.value.items[0]?.relativePath, "b/c");
 });
+
+test("initialize rejects home directory as project root", async () => {
+	const runtime = new FffRuntime(homedir());
+	const result = await runtime.ensure();
+	assert.equal(result.isOk(), false);
+	if (result.isOk()) assert.fail("Expected initialization to fail");
+	assert.match(result.error.message, /Cannot index the home directory/i);
+	assert.match(result.error.message, /navigate to a specific project directory/i);
+});

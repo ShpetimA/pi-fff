@@ -65,6 +65,11 @@ async function getPathType(path: string): Promise<"file" | "directory" | null> {
 	}
 }
 
+function isHomeDirectory(path: string): boolean {
+	const home = homedir();
+	return resolve(path) === resolve(home);
+}
+
 function normalizeSlashes(value: string): string {
 	return value.replace(/\\/g, "/");
 }
@@ -826,6 +831,19 @@ export class FffRuntime {
 
 		const projectRoot = this.options.projectRoot ?? await resolveProjectRoot(this.cwd);
 		this.basePath = projectRoot;
+
+		// Prevent scanning the home directory to avoid triggering OneDrive sync
+		// on Windows and to prevent indexing excessive files
+		if (isHomeDirectory(projectRoot)) {
+			return errResult(
+				new RuntimeInitializationError({
+					cwd: this.cwd,
+					step: "validate project root",
+					cause: "Cannot index the home directory. Please navigate to a specific project directory instead.",
+				}),
+			);
+		}
+
 		const paths = getProjectDatabasePaths(root, projectRoot);
 		const dbDir = paths.dbDir;
 		const dbResult = await Result.tryPromise({
