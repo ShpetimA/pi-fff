@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@ff-labs/fff-node": "^0.9.4",
-    "@sinclair/typebox": "^0.34.41",
     "better-result": "^2.8.2"
   },
   "devDependencies": {
@@ -44,7 +43,8 @@
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*"
+    "@mariozechner/pi-tui": "*",
+    "@sinclair/typebox": "*"
   },
   "pi": {
     "extensions": [
