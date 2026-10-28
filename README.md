@@ -89,6 +89,12 @@ That runtime:
 
 So in normal use, indexing is automatic.
 
+The index root is the nearest directory that contains a `.git` entry, falling back to the session working directory. Set `PI_FFF_PROJECT_ROOT` to pin it somewhere else, for example when pi starts in your home directory or when several sessions should share one index:
+
+```bash
+PI_FFF_PROJECT_ROOT=/path/to/workspace pi
+```
+
 ### Do I need to reindex manually?
 
 Usually, no.
