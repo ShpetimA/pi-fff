@@ -16,6 +16,8 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 export async function resolveProjectRoot(cwd: string): Promise<string> {
+	const override = process.env.PI_FFF_PROJECT_ROOT?.trim();
+	if (override) return resolve(override);
 	const start = resolve(cwd);
 	let current = start;
 	while (true) {
