@@ -32,18 +32,18 @@
     "url": "git+https://github.com/ShpetimA/pi-fff.git"
   },
   "dependencies": {
-    "@ff-labs/fff-node": "^0.9.4",
-    "better-result": "^2.8.2"
+    "@ff-labs/fff-node": "^0.11.0",
+    "better-result": "^3.0.1"
   },
   "devDependencies": {
-    "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*",
+    "@earendil-works/pi-coding-agent": "^1.4.0",
+    "@earendil-works/pi-tui": "^1.4.0",
     "@types/node": "^24.3.0",
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
     "@sinclair/typebox": "*"
   },
   "pi": {

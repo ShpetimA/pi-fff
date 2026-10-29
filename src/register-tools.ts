@@ -1,5 +1,5 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { createGrepTool, createReadTool } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { createGrepTool, createReadTool } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { FinderOperationError, RuntimeInitializationError } from "./errors.ts";
 import {

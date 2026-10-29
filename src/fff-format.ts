@@ -1,4 +1,4 @@
-import { truncateHead, truncateLine, type TruncationResult } from "@mariozechner/pi-coding-agent";
+import { truncateHead, truncateLine, type TruncationResult } from "@earendil-works/pi-coding-agent";
 import { CROPPED_MATCH_LINE_WIDTH, DEFAULT_FILE_CANDIDATE_LIMIT, MAX_AUTO_EXPAND_LINES, type FffFileCandidate, type GrepMatch, type GrepOutputMode, type ResolvedPath } from "./fff-types.ts";
 
 function formatContextLine(path: string, lineNumber: number, line: string) {

@@ -1,5 +1,5 @@
 import type { HealthCheck, FileItem as EngineFileItem, FileFinder, GrepCursor, GrepMatch as EngineGrepMatch, GrepMode, GrepResult, Location, Result as EngineResult, Score } from "@ff-labs/fff-node";
-import type { TruncationResult } from "@mariozechner/pi-coding-agent";
+import type { TruncationResult } from "@earendil-works/pi-coding-agent";
 import type { FindFilesError, GrepSearchError, PathResolutionError, RelatedFilesError } from "./errors.ts";
 import type { AppResult } from "./result-utils.ts";
 

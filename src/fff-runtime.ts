@@ -1,6 +1,6 @@
 import { FileFinder } from "@ff-labs/fff-node";
 import { Result } from "better-result";
-import { getAgentDir } from "@mariozechner/pi-coding-agent";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { mkdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, relative, resolve } from "node:path";

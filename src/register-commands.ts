@@ -1,5 +1,5 @@
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { Key, matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Key, matchesKey, truncateToWidth } from "@earendil-works/pi-tui";
 import { buildStatusReport, FEATURE_DEFINITIONS, FFF_RUNTIME_NOT_READY_TEXT, type FeatureKey } from "./extension-common.ts";
 import { FffRuntime } from "./fff.ts";
 

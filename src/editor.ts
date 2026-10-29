@@ -1,7 +1,7 @@
-import type { KeybindingsManager } from "@mariozechner/pi-coding-agent";
-import { CustomEditor } from "@mariozechner/pi-coding-agent";
-import type { AutocompleteItem, AutocompleteProvider, AutocompleteSuggestions, TUI } from "@mariozechner/pi-tui";
-import type { EditorTheme } from "@mariozechner/pi-tui";
+import type { KeybindingsManager } from "@earendil-works/pi-coding-agent";
+import { CustomEditor } from "@earendil-works/pi-coding-agent";
+import type { AutocompleteItem, AutocompleteProvider, AutocompleteSuggestions, TUI } from "@earendil-works/pi-tui";
+import type { EditorTheme } from "@earendil-works/pi-tui";
 import type { FffRuntime } from "./fff.ts";
 
 const PATH_DELIMITERS = new Set([" ", "\t", '"', "'", "="]);
