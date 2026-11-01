@@ -30,6 +30,7 @@ export type ResolvedPath = {
 	pathType: "file" | "directory";
 	location?: Location;
 	candidates: FffFileCandidate[];
+	isOutsideBasePath?: boolean;
 };
 
 export type PathResolution = AppResult<ResolvedPath, PathResolutionError>;
