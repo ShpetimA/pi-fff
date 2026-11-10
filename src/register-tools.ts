@@ -10,6 +10,7 @@ import {
 	FFF_RUNTIME_NOT_READY_TEXT,
 	grepNeedsBuiltinFallback,
 	inferFffGrepMode,
+	isUrlPath,
 	locationToReadParams,
 	normalizeMode,
 	normalizeOutputMode,
@@ -57,6 +58,13 @@ export function registerTools(pi: ExtensionAPI, deps: ToolRegistrationDeps): voi
 				const original = createReadTool(ctx.cwd);
 				const runtime = deps.getRuntime();
 				if (!runtime || !deps.isFeatureEnabled("builtInReadEnhancement")) {
+					return original.execute(toolCallId, params, signal, onUpdate);
+				}
+
+				// Internal URLs (`skill://`, `memory://`, `artifact://`, …) and web URLs are resolved by
+				// the host's own router. FFF only indexes files, so it fails every one of them with
+				// `No files matched "<url>"`; the built-in read must see them exactly as the model wrote them.
+				if (isUrlPath(params.path)) {
 					return original.execute(toolCallId, params, signal, onUpdate);
 				}
 
