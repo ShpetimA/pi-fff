@@ -53,6 +53,28 @@ function isMissingFileError(value: unknown): value is NodeJS.ErrnoException {
 	return typeof value === "object" && value !== null && "code" in value && (value as NodeJS.ErrnoException).code === "ENOENT";
 }
 
+/**
+ * `scheme://…` anywhere in the path: `skill://name`, `memory://root/x`, `artifact://7`, `https://…`,
+ * and the host's `dir/local://x.md` spelling. A filesystem path never contains `://`.
+ */
+const HIERARCHICAL_URL_RE = /:\/\//;
+/**
+ * The host's single-slash alias (`local:/x.md`). The scheme needs two or more characters so a
+ * Windows drive path (`C:/Users/me`) is not mistaken for one.
+ */
+const SINGLE_SLASH_URL_RE = /^[a-z][a-z0-9+.-]+:\/(?!\/)/i;
+
+/**
+ * Whether `path` is a URL the host resolves through its own router instead of the filesystem.
+ *
+ * FFF indexes files only, so it can never resolve these: it reports `No files matched "<url>"` (or
+ * an ambiguous-path error listing unrelated fuzzy hits) for every one of them. Tools that wrap a
+ * built-in must hand such paths over untouched.
+ */
+export function isUrlPath(path: string): boolean {
+	return HIERARCHICAL_URL_RE.test(path) || SINGLE_SLASH_URL_RE.test(path);
+}
+
 export function buildReadFailureMessage(action: string, query: string, error: PathResolutionError): string {
 	return formatPathResolutionError(action, query, error);
 }
